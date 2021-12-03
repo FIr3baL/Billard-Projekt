@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="de">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Testing</title>
+
+	<link rel="stylesheet" href="style.css">
+
+	<script type="text/javascript" src="import/audio-fx.min.js" ></script>
+	<script type="text/javascript" src="sounds.js" ></script>
+	<script type="text/javascript" src="exceptions.js"></script>
+	<script type="text/javascript" src="code.js"></script>
+	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript" src="inits.js"></script>
+	<script type="text/javascript" src="vector.js"></script>
+	<script type="text/javascript" src="ball.js"></script>
+	<script type="text/javascript" src="cushion.js"></script>
+	<script type="text/javascript" src="statehistory.js"></script>
+	<script type="text/javascript" src="import/requestanimationframe_edit.js"></script>
+	
+	<script type="text/javascript">
+	
+	function initInputs() {
+		docxPosNum = document.getElementById("xPosNum");
+		// docxPosRan = document.getElementById("xPosRan");
+		docyPosNum = document.getElementById("yPosNum");
+		// docyPosRan = document.getElementById("yPosRan");
+
+		docxDirNum = document.getElementById("xDirNum");
+		// docxDirRan = document.getElementById("xDirRan");
+		docyDirNum = document.getElementById("yDirNum");
+		// docyDirRan = document.getElementById("yDirRan");
+
+		docStateNr = document.getElementById("stateNr");
+
+		docStartAnimation = document.getElementById("startAnimation");
+		docStopAnimation = document.getElementById("stopAnimation");
+		
+		docInitState = document.getElementById("initState");
+		docPrevStateVeryFast = document.getElementById("prevStateVeryFast");
+		docPrevStateFast = document.getElementById("prevStateFast");
+		docPrevState = document.getElementById("prevState");
+		docNextState = document.getElementById("nextState");
+		docNextStateFast = document.getElementById("nextStateFast");
+		docNextStateVeryFast = document.getElementById("nextStateVeryFast");
+
+		
+		// docToURL = document.getElementById("toURL");
+		
+		docURLText = document.getElementById("urlText");
+		docNoVelocity = document.getElementById("noVelocity");
+
+		docVectorSelect = new Array();
+		docVectorSelect[0] = document.getElementById("vectorSelectPosition");
+		docVectorSelect[1] = document.getElementById("vectorSelectVelocity");
+		// docVectorSelect[2] = document.getElementById("vectorSelectAcceleration");
+
+		docVectorSelect[cursorMoves.vector].style.borderStyle= "inset";
+
+		docVectorSelect[0].addEventListener("click", function() {
+			cursorMoves.vector = 0;
+			docVectorSelect[1].style.borderStyle = "outset";
+			docVectorSelect[0].style.borderStyle = "inset";
+			
+		});
+
+		docVectorSelect[1].addEventListener("click", function() {
+			cursorMoves.vector = 1;
+			docVectorSelect[0].style.borderStyle = "outset";
+			docVectorSelect[1].style.borderStyle = "inset";
+		});
+
+		// docVectorSelect[2].addEventListener("click", function() {
+		// 	cursorMoves.vector = 2;
+		// });
+
+		// X-Position
+		// docxPosNum.addEventListener("input", function(){
+		// 	if (docxPosNum.value % 1 == 0) docxPosNum.value += 0.5;
+		// 	balls[cursorMoves.ballNr].moveTo(new Vector(parseInt(docxPosNum.value), parseInt(docyPosNum.value)));
+		// 	saveState();
+		// }, false);
+
+		docxPosNum.addEventListener("input", xPosNumHandler);
+
+		function xPosNumHandler() {
+			//docxPosNum.removeEventListener("input", xPosNumHandler);
+			
+			// console.log(docxPosNum.value);
+			if (docxPosNum.value % 1 == 0) docxPosNum.value = parseInt(docxPosNum.value) + 0.5;
+			balls[cursorMoves.ballNr].moveTo(new Vector(parseInt(docxPosNum.value), parseInt(docyPosNum.value)));
+			saveState();
+			
+			//docxPosNum.addEventListener("input", xPosNumHandler);
+		}
+
+		// Y-Position
+		docyPosNum.addEventListener("input", function(){
+			if (docyPosNum.value % 1 == 0) docyPosNum.value = parseInt(docyPosNum.value) + 0.5;
+			balls[cursorMoves.ballNr].moveTo(new Vector(parseInt(docxPosNum.value), parseInt(docyPosNum.value)));
+			saveState();
+		}, false);
+
+		// X-Geschwindigkeit
+		docxDirNum.addEventListener("input", function(){
+			balls[cursorMoves.ballNr].changeDir(new Vector(parseInt(docxDirNum.value), parseInt(docyDirNum.value)));
+			saveState();
+		}, false);
+
+		// Y-Geschwindigkeit
+		docyDirNum.addEventListener("input", function(){
+			balls[cursorMoves.ballNr].changeDir(new Vector(parseInt(docxDirNum.value), parseInt(docyDirNum.value)));
+			saveState();
+		}, false);
+
+		// Mouse Steuerung
+		table_pic_top.addEventListener("mousedown", mouseStart);
+		bodyTag.addEventListener("mousemove", mouseMove);
+		table_pic_top.addEventListener("mouseup", mouseEnd );
+
+		// Animations Start-Button
+		docStartAnimation.addEventListener("click", startAnimate);
+		docStopAnimation.addEventListener("click", stopAnimate);
+
+		// Tisch in den Ausgangszustand
+		docInitState.addEventListener("click", function() {
+			initBalls();
+			drawBalls();
+		});
+
+		// Vorherigen Tischzustand laden
+		docPrevStateVeryFast.addEventListener("click", loadPrevStateVeryFast);
+		docPrevStateFast.addEventListener("click", loadPrevStateFast);
+		docPrevState.addEventListener("click", loadPrevState);
+		// Nächsten Tischzustand laden
+		docNextState.addEventListener("click", loadNextState);
+		docNextStateFast.addEventListener("click", loadNextStateFast);
+		docNextStateVeryFast.addEventListener("click", loadNextStateVeryFast);
+
+		// docToURL.addEventListener("click", stateToURL);
+
+		docNoVelocity.addEventListener("click", deleteVelocity);
+
+		docxPosNum.value = balls[cursorMoves.ballNr].pos.x;
+		docyPosNum.value = balls[cursorMoves.ballNr].pos.y;
+		docxDirNum.value = balls[cursorMoves.ballNr].v.x;
+		docyDirNum.value = balls[cursorMoves.ballNr].v.y;
+
+	}
+
+
+	function mouseStart(e) {
+		mouseV = new Vector(e.pageX, e.pageY);
+		mouseV.mouseInCanvas();
+
+
+		// da Kugelmittelpunkte immer auf einem halben Pixel liegen, Cursorposition um 0,5 verschieben
+		mouseV.x += 0.5;
+		mouseV.y += 0.5;
+
+		isDrawing = true;
+
+		var cursorMovesOldBallNr = cursorMoves.ballNr;
+		var cursorMovesOldVector = cursorMoves.vector;
+
+		
+		// Wenn Startposition der Mausbewegung auf Kugel, diese auswählen und verschieben
+		// balls.forEach(function(balli, index, array) {
+		for(var i = 0; i < balls.length; i++) {
+			
+			// Wenn Ball-Position ausgewählt
+			if (balls[i].pos.isInsideBall(mouseV)) {
+				// Zweiter Klick auf bereits für Positionierung aktivierte Kugel schaltet auf Geschwindigkeit um
+				if ( (cursorMoves.ballNr == i) && (balls[i].aimTo.sub(balls[i].pos).abs() < bDiameter) ){
+					cursorMoves.vector = cursorMoves.vector^1;
+					docVectorSelect[cursorMoves.vector].style.borderStyle = "inset";
+					docVectorSelect[cursorMoves.vector^1].style.borderStyle = "outset";
+				} else {
+					cursorMoves.ballNr = balls[i].nr;
+					cursorMoves.ballNr = i;
+					cursorMoves.vector = 0;
+					docVectorSelect[0].style.borderStyle = "inset";
+					docVectorSelect[1].style.borderStyle = "outset";
+				
+				
+
+					// Info und Inputfelder aktualisieren
+					docBallTitle.innerHTML = ballName[balls[i].nr];
+				
+					docxPosNum.value = balls[i].pos.x;
+					docyPosNum.value = balls[i].pos.y;
+
+					docxDirNum.value = balls[i].v.x;
+					docyDirNum.value = balls[i].v.y;
+				}
+				break;
+			// Wenn Pfeil ausgewählt
+			}  else if (balls[i].aimTo.isInsideBall(mouseV)) {
+				cursorMoves.ballNr = i;
+				cursorMoves.vector = 1;
+				docVectorSelect[1].style.borderStyle = "inset";
+				docVectorSelect[0].style.borderStyle = "outset";
+				
+
+				// Info und Inputfelder aktualisieren
+
+				docBallTitle.innerHTML = ballName[balls[i].nr];
+				
+				docxPosNum.value = balls[i].pos.x
+				docyPosNum.value = balls[i].pos.y;
+
+				docxDirNum.value = mouseV.x;
+				docyDirNum.value = mouseV.y;
+
+
+			}
+		}
+
+
+		if ( (cursorMovesOldBallNr == cursorMoves.ballNr) && (cursorMovesOldVector == cursorMoves.vector) ) {
+			switch(cursorMoves.vector) {
+				
+				// Kugelposition
+				case 0:
+					balls[cursorMoves.ballNr].moveTo(mouseV);
+					docxPosNum.value = mouseV.x;
+					docyPosNum.value = mouseV.y;
+					break;
+				case 1:
+					mouseDir = mouseV.sub(balls[cursorMoves.ballNr].pos);
+					balls[cursorMoves.ballNr].changeDir(mouseDir);
+					docxDirNum.value = mouseDir.x;
+					docyDirNum.value = mouseDir.y;
+			}
+			drawBalls();
+		} else {
+
+		}
+	}
+
+	function mouseMove(e) {
+		if(isDrawing === true) {
+			e.preventDefault();
+			mouseV = new Vector(e.pageX, e.pageY);
+			mouseV.mouseInCanvas();
+			
+			// da Kugelmittelpunkte immer auf einem halben Pixel liegen, Cursorposition um 0,5 verschieben
+			mouseV.x += 0.5;
+			mouseV.y += 0.5;
+		
+		
+			switch(cursorMoves.vector) {
+				
+				// Kugelposition
+				case 0:
+					balls[cursorMoves.ballNr].moveTo(mouseV);
+					docxPosNum.value = mouseV.x;
+					docyPosNum.value = mouseV.y;
+					break;
+				// Geschwindigkeit
+				case 1:
+					mouseDir = mouseV.sub(balls[cursorMoves.ballNr].pos);
+					balls[cursorMoves.ballNr].changeDir(mouseDir);
+					docxDirNum.value = mouseDir.x;
+					docyDirNum.value = mouseDir.y;
+			}
+
+
+			drawBalls();
+		}
+
+	}
+
+	function mouseEnd(e) {
+		mouseEndV = new Vector(e.pageX, e.pageY);
+		mouseEndV.mouseInCanvas();
+
+		isDrawing = false;
+
+		// neuen Tischzustand abspeichern
+		saveState(balls);
+		
+		
+	}
+
+	// var getScriptURL = (function() {
+	//     var scripts = document.getElementsByTagName('script');
+	//     var index = scripts.length - 1;
+	//     var myScript = scripts[index];
+	//     return function() { return myScript.src; };
+	// })();
+
+	</script>
+	</head>
+
+	<body id="bodyTag" onload = "init()">
+		
+		<div id="tableContainer">
+			<div id="table_pic1"></div>
+			<canvas id="gamecanvas" >Kein Canvas unterstützt</canvas>
+			<div id="table_pic_top"></div>
+		</div>
+		<div id="controlContainer">
+			
+			<div style="width:800px; margin:auto;text-align:center">	
+				<input type="button" id="vectorSelectPosition" class="selectButton" value="Position"/>
+				<input type="button" id="vectorSelectVelocity" class="selectButton" value="Geschwindigkeit"/>
+			</div>
+			<!-- <input type="radio" id="vectorSelectAcceleration" name="vectorSelect" value="2">
+			<label for="vectorSelectAccelration">Beschleunigung</label> -->
+
+			
+
+			<div style="position:absolute; width:920px;">
+				<div style="position:absolute;left:0px;width:300px; margin: 2px auto 2px 0px;text-align:left">
+					<input type="button" id="noVelocity" value="Ball ruht"/>
+					<input type="button" id="startAnimation" value="Animation"/>
+					<input type="button" id="stopAnimation" value="Stop"/>
+				</div>
+				
+				<div style="position:absolute;right:0px;width: 650px; margin: 2px 0px 2px auto;text-align:right">
+					<button type="button" id="initState">Neu</button>
+					<button type="button" id="prevStateVeryFast">&lt;&lt;&lt;</button>
+					<button type="button" id="prevStateFast">&lt;&lt;</button>
+					<button type="button" id="prevState">&lt;</button>
+					<span>Zustand&nbsp;</span><span id="stateNr">1</span>
+					<button type="button" id="nextState">&gt;</button>
+					<button type="button" id="nextStateFast">&gt;&gt;</button>
+					<button type="button" id="nextStateVeryFast">&gt;&gt;&gt;</button>
+				</div>
+			</div>
+			
+			<br/>
+			<span id="info">&nbsp;</span>
+
+			<p id="ballTitle" style="margin:3px 0px;">Wei&szlig;e Kugel</p>
+
+				
+
+				<label for="xPosNum">X: </label>
+				<input type="number" id="xPosNum"  class="controls_num" value=50 min=11 max=788 step="0.5"/>
+			
+				<label for="yPosNum">Y: </label>
+				<input type="number" id="yPosNum"  class="controls_num" value=50 min=11 max=788 step="0.5" />
+
+				&nbsp;&nbsp;&nbsp;
+				<label for="xDirNum">VX: </label>
+				<input type="number" id="xDirNum"  class="controls_num" value=50 min=-788 max=788 step=1/>
+
+				<label for="yDirNum">VY: </label>
+				<input type="number" id="yDirNum"  class="controls_num" value=50 min=-388 max=388 step=1/>
+
+			<br/><br/>
+			<!-- <div class="border_thin"> -->
+			<textarea class="border_thin" id="urlText" value=200 onclick="this.focus();this.select()" readonly="readonly"/></textarea>
+			<!-- </div> -->
+			
+		</div>
+		
+
+		<img id="ball0" src="img/ball_23_white.png" alt="" style="display:none;">
+		<img id="ball1" src="img/ball_23_1.png" alt="" style="display:none;">
+		<img id="ball2" src="img/ball_23_2.png" alt="" style="display:none;">
+		<img id="ball3" src="img/ball_23_3.png" alt="" style="display:none;">
+		<img id="ball4" src="img/ball_23_4.png" alt="" style="display:none;">
+		<img id="ball5" src="img/ball_23_5.png" alt="" style="display:none;">
+		<img id="ball6" src="img/ball_23_6.png" alt="" style="display:none;">
+		<img id="ball7" src="img/ball_23_7.png" alt="" style="display:none;">
+		<img id="ball8" src="img/ball_23_8.png" alt="" style="display:none;">
+		<img id="ball9" src="img/ball_23_9.png" alt="" style="display:none;">
+		<img id="ballshadow" src="img/shadow.png" alt="" style="display:none;">
+
+
+	</body>
+</html>
